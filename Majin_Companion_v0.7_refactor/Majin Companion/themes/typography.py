@@ -1,0 +1,4 @@
+TITLE = 32
+HEADER = 24
+BODY = 16
+SMALL = 12

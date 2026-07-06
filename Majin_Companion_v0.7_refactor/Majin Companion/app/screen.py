@@ -1,0 +1,5 @@
+HOME = "home"
+WORKSHOP = "workshop"
+BRAIN = "brain"
+SESSION = "session"
+TIMELINE = "timeline"

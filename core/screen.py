@@ -1,0 +1,6 @@
+HOME = "home"
+DREAMS = "dreams"
+GOALS = "goals"
+TIMELINE = "timeline"
+PROJECTS = "projects"
+SESSION = "session"
