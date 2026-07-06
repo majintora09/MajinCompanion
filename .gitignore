@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+
+# Build
+build/
+dist/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Environment
+.env
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+
+# Flet
+.flet/
+
+# IDE
+.idea/
