@@ -9,7 +9,7 @@ from themes import colors, spacing
 from memory.sessions import start_session
 
 
-def workshop(on_back, on_message, on_continue):
+def workshop(on_back, on_message, on_continue, on_open_brain):
     project_cards = []
 
     sorted_projects = sorted(PROJECTS, key=lambda p: p["priority"])
@@ -17,12 +17,17 @@ def workshop(on_back, on_message, on_continue):
     for project in sorted_projects:
         buttons = [
             primary_button(
+                "Open Brain",
+                icon=ft.Icons.PSYCHOLOGY,
+                on_click=lambda e, p=project: on_open_brain(p["id"]),
+            ),
+            quiet_button(
                 "Continue",
                 icon=ft.Icons.PLAY_ARROW,
                 on_click=lambda e, p=project: continue_project(p, on_message, on_continue),
             ),
             quiet_button(
-                "Open folder",
+                "Folder",
                 icon=ft.Icons.FOLDER_OPEN,
                 on_click=lambda e, p=project: open_project_folder(p, on_message),
             ),
@@ -31,7 +36,7 @@ def workshop(on_back, on_message, on_continue):
         if project.get("url"):
             buttons.append(
                 quiet_button(
-                    "Open website",
+                    "Website",
                     icon=ft.Icons.LANGUAGE,
                     on_click=lambda e, p=project: open_project_website(p, on_message),
                 )
@@ -48,7 +53,6 @@ def workshop(on_back, on_message, on_continue):
                         ),
                         ft.Text(project["status"], size=14, color=colors.MUTED),
                         ft.Text(f"Priority: {project['priority']:02d}   Momentum: {project['momentum']}", size=12, color=colors.MAJIN_PURPLE),
-                        ft.Text(project["path"], size=11, color=colors.MUTED),
                         ft.Row(buttons, spacing=spacing.SMALL_GAP, wrap=True),
                     ],
                     spacing=spacing.SMALL_GAP,
@@ -61,7 +65,7 @@ def workshop(on_back, on_message, on_continue):
         [
             quiet_button("Back to Campfire", icon=ft.Icons.ARROW_BACK, on_click=lambda e: on_back()),
             ft.Text("Workshop", size=30, weight=ft.FontWeight.BOLD),
-            ft.Text("Projects are ideas waiting to be realized.", size=14, color=colors.MUTED),
+            ft.Text("Choose a Place. Future Yuri remembers the rest.", size=14, color=colors.MUTED),
             *project_cards,
         ],
         spacing=spacing.GAP,

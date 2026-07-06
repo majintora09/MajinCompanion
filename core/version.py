@@ -1,2 +1,2 @@
-VERSION = "0.7.1"
-CODENAME = "Campfire"
+VERSION = "0.7.2"
+CODENAME = "Brains"

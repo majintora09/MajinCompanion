@@ -7,21 +7,25 @@ from memory.dreams import save_dream
 from memory.activity import log_activity
 from memory.sessions import get_active_session, get_last_session, start_session
 from projects.registry import PROJECTS
+from projects.brains import ensure_all_project_brains
 from themes import colors, spacing
 from components.card import card
 from components.button import primary_button, quiet_button
 from components.hero import hero
 from components.background import grid_background
-from components.quick_launch import quick_launch_card
 from screens.memory_screens import dreams_screen, goals_screen, timeline_screen
 from screens.projects import workshop
 from screens.session import session_screen
+from screens.brain import brain_screen
 
 
 class Companion:
     def __init__(self, page: ft.Page):
         self.page = page
         self.current_screen = screen.HOME
+        self.current_brain_project_id = None
+
+        ensure_all_project_brains(PROJECTS)
 
         self.goal_input = ft.TextField(
             hint_text="What matters right now?",
@@ -81,6 +85,12 @@ class Companion:
         self.current_screen = screen.SESSION
         self.render()
 
+    def open_brain(self, project_id):
+        self.current_brain_project_id = project_id
+        self.current_screen = screen.BRAIN
+        log_activity(f"🧠 Opened brain: {project_id}")
+        self.render()
+
     def screen_content(self):
         if self.current_screen == screen.DREAMS:
             return dreams_screen(self.navigate)
@@ -92,10 +102,18 @@ class Companion:
             return timeline_screen(self.navigate)
 
         if self.current_screen == screen.PROJECTS:
-            return workshop(self.back_home, self.toast, self.open_session)
+            return workshop(self.back_home, self.toast, self.open_session, self.open_brain)
 
         if self.current_screen == screen.SESSION:
             return session_screen(self.back_home, self.toast)
+
+        if self.current_screen == screen.BRAIN:
+            return brain_screen(
+                self.current_brain_project_id,
+                lambda: self.navigate(screen.PROJECTS),
+                self.toast,
+                self.open_session,
+            )
 
         return self.campfire()
 
