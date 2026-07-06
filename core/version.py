@@ -1,2 +1,2 @@
-VERSION = "1.0.1"
-CODENAME = "Foundations"
+VERSION = "1.0.2"
+CODENAME = "Place Structure"

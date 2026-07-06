@@ -30,12 +30,22 @@ def default_brain(project: dict):
             "status": project.get("status", ""),
             "color": project.get("color", "green"),
         },
-        "mission": "",
-        "notes": "",
+        "mission": {
+            "title": "",
+            "updated": "",
+        },
+        "session": {
+            "active": False,
+            "started": "",
+            "goal": "",
+        },
+        "notes": {
+            "text": "",
+            "updated": "",
+        },
         "dreams": [],
         "discoveries": [],
         "history": [],
-        "sessions": [],
         "links": {
             "folder": project.get("path"),
             "website": project.get("url"),
@@ -49,9 +59,7 @@ def default_brain(project: dict):
 
 
 def ensure_brain(project: dict):
-    folder = place_folder(project["id"])
-    folder.mkdir(parents=True, exist_ok=True)
-
+    place_folder(project["id"]).mkdir(parents=True, exist_ok=True)
     path = brain_file(project["id"])
 
     if not path.exists():
@@ -77,6 +85,7 @@ def load_brain(place_id: str):
 
 def save_brain(place_id: str, brain: dict):
     place_folder(place_id).mkdir(parents=True, exist_ok=True)
+    brain.setdefault("metadata", {})
     brain["metadata"]["last_updated"] = now()
     brain_file(place_id).write_text(json.dumps(brain, indent=2), encoding="utf-8")
 
@@ -87,11 +96,6 @@ def add_history(place_id: str, text: str):
     if not brain:
         return
 
-    brain["history"].append(
-        {
-            "time": now(),
-            "text": text,
-        }
-    )
-
+    brain.setdefault("history", [])
+    brain["history"].append({"time": now(), "text": text})
     save_brain(place_id, brain)
