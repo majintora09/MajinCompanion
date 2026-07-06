@@ -64,6 +64,9 @@ def ensure_brain(project: dict):
 
     if not path.exists():
         save_brain(project["id"], default_brain(project))
+        return
+
+    migrate_brain(project)
 
 
 def ensure_all_brains(projects):
@@ -88,6 +91,62 @@ def save_brain(place_id: str, brain: dict):
     brain.setdefault("metadata", {})
     brain["metadata"]["last_updated"] = now()
     brain_file(place_id).write_text(json.dumps(brain, indent=2), encoding="utf-8")
+
+
+def migrate_brain(project: dict):
+    brain = load_brain(project["id"])
+
+    if not brain:
+        save_brain(project["id"], default_brain(project))
+        return
+
+    base = default_brain(project)
+
+    old_mission = brain.get("mission", "")
+    old_notes = brain.get("notes", "")
+
+    if isinstance(old_mission, str):
+        base["mission"] = {
+            "title": old_mission,
+            "updated": brain.get("metadata", {}).get("last_updated", ""),
+        }
+    else:
+        base["mission"] = old_mission
+
+    if isinstance(old_notes, str):
+        base["notes"] = {
+            "text": old_notes,
+            "updated": brain.get("metadata", {}).get("last_updated", ""),
+        }
+    else:
+        base["notes"] = old_notes
+
+    base["dreams"] = normalize_list(brain.get("dreams", []))
+    base["discoveries"] = normalize_list(brain.get("discoveries", []))
+    base["history"] = normalize_list(brain.get("history", []))
+    base["sessions"] = brain.get("sessions", [])
+
+    base["metadata"]["created"] = brain.get("metadata", {}).get("created", now())
+    base["metadata"]["last_updated"] = now()
+
+    save_brain(project["id"], base)
+
+
+def normalize_list(items):
+    normalized = []
+
+    for item in items:
+        if isinstance(item, dict):
+            normalized.append(item)
+        else:
+            normalized.append(
+                {
+                    "time": "",
+                    "text": str(item),
+                }
+            )
+
+    return normalized
 
 
 def add_history(place_id: str, text: str):

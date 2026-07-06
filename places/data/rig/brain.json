@@ -9,12 +9,22 @@
     "status": "Designing the sim rig platform.",
     "color": "green"
   },
-  "mission": "",
-  "notes": "",
+  "mission": {
+    "title": "",
+    "updated": "2026-07-06 23:52"
+  },
+  "session": {
+    "active": false,
+    "started": "",
+    "goal": ""
+  },
+  "notes": {
+    "text": "",
+    "updated": "2026-07-06 23:52"
+  },
   "dreams": [],
   "discoveries": [],
   "history": [],
-  "sessions": [],
   "links": {
     "folder": "D:\\MAJIN RIG MK-1",
     "website": null,
@@ -22,6 +32,7 @@
   },
   "metadata": {
     "created": "2026-07-06 23:52",
-    "last_updated": "2026-07-06 23:52"
-  }
+    "last_updated": "2026-07-07 00:22"
+  },
+  "sessions": []
 }

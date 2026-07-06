@@ -4,7 +4,16 @@ import webbrowser
 import flet as ft
 
 from projects.registry import PROJECTS
-from projects.brains import read_text_file, write_text_file, append_project_dream, append_project_activity
+from places.brain import (
+    get_notes,
+    set_notes,
+    add_dream,
+    add_discovery,
+    get_recent_dreams,
+    get_recent_discoveries,
+    get_history,
+)
+from places.future import future_yuri_message
 from memory.sessions import start_session, get_active_session
 from components.card import card
 from components.button import primary_button, quiet_button
@@ -30,10 +39,8 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
             spacing=spacing.GAP,
         )
 
-    notes_value = read_text_file(project_id, "notes.md", "# Notes\n")
-
     notes_input = ft.TextField(
-        value=notes_value,
+        value=get_notes(project_id),
         multiline=True,
         min_lines=8,
         max_lines=14,
@@ -42,7 +49,7 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
     )
 
     dream_input = ft.TextField(
-        hint_text="Drop a Place-specific dream here...",
+        hint_text="Dream for this Place...",
         multiline=True,
         min_lines=2,
         max_lines=4,
@@ -50,25 +57,44 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
         focused_border_color=colors.EJ6_GREEN,
     )
 
+    discovery_input = ft.TextField(
+        hint_text="What did we learn here?",
+        multiline=True,
+        min_lines=2,
+        max_lines=4,
+        border_color=colors.EJ6_GREEN,
+        focused_border_color=colors.MAJIN_PURPLE,
+    )
+
     feedback = ft.Text("", size=13, color=colors.EJ6_GREEN)
 
     def save_notes(e):
-        write_text_file(project_id, "notes.md", notes_input.value)
-        append_project_activity(project_id, "📝 Notes updated from Workbench")
+        set_notes(project_id, notes_input.value)
         feedback.value = "Notes saved. Future Yuri has it."
         feedback.update()
 
-    def save_dream(e):
+    def save_dream_clicked(e):
         if not dream_input.value or not dream_input.value.strip():
             feedback.value = "Drop an idea first."
             feedback.update()
             return
 
-        append_project_dream(project_id, dream_input.value)
-        append_project_activity(project_id, f"🧠 Dream saved: {dream_input.value.strip()}")
+        add_dream(project_id, dream_input.value)
         dream_input.value = ""
-        feedback.value = "Dream saved to this Place."
         dream_input.update()
+        feedback.value = "Dream saved to this Place."
+        feedback.update()
+
+    def save_discovery_clicked(e):
+        if not discovery_input.value or not discovery_input.value.strip():
+            feedback.value = "Write the discovery first."
+            feedback.update()
+            return
+
+        add_discovery(project_id, discovery_input.value)
+        discovery_input.value = ""
+        discovery_input.update()
+        feedback.value = "Discovery saved. This one matters."
         feedback.update()
 
     def continue_place(e):
@@ -85,6 +111,7 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                         ft.Text(f"{project['icon']}  {project.get('nickname', project['name'])}", size=34, weight=ft.FontWeight.BOLD),
                         ft.Text(project["status"], size=14, color=colors.MUTED),
                         ft.Text("Let's pick it back up.", size=16, color=colors.TEXT),
+                        ft.Text(future_yuri_message(project_id), size=14, color=colors.MAJIN_PURPLE),
                         ft.Row(
                             [
                                 primary_button("Continue", icon=ft.Icons.PLAY_ARROW, on_click=continue_place),
@@ -121,17 +148,34 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                         expand=2,
                     ),
                     ft.Container(
-                        card(
-                            ft.Column(
-                                [
-                                    ft.Text("Quick Dream", size=14, color=colors.EJ6_GREEN),
-                                    ft.Text("Ideas for this Place only.", size=12, color=colors.MUTED),
-                                    dream_input,
-                                    primary_button("Save dream", icon=ft.Icons.AUTO_AWESOME, on_click=save_dream),
-                                ],
-                                spacing=spacing.SMALL_GAP,
-                            ),
-                            accent="purple",
+                        ft.Column(
+                            [
+                                card(
+                                    ft.Column(
+                                        [
+                                            ft.Text("Quick Dream", size=14, color=colors.EJ6_GREEN),
+                                            ft.Text("Ideas that are not actionable yet.", size=12, color=colors.MUTED),
+                                            dream_input,
+                                            primary_button("Save dream", icon=ft.Icons.AUTO_AWESOME, on_click=save_dream_clicked),
+                                        ],
+                                        spacing=spacing.SMALL_GAP,
+                                    ),
+                                    accent="purple",
+                                ),
+                                card(
+                                    ft.Column(
+                                        [
+                                            ft.Text("Discovery", size=14, color=colors.EJ6_GREEN),
+                                            ft.Text("What did we learn that Future Yuri will need?", size=12, color=colors.MUTED),
+                                            discovery_input,
+                                            primary_button("Save discovery", icon=ft.Icons.LIGHTBULB, on_click=save_discovery_clicked),
+                                        ],
+                                        spacing=spacing.SMALL_GAP,
+                                    ),
+                                    accent="green",
+                                ),
+                            ],
+                            spacing=spacing.GAP,
                         ),
                         expand=1,
                     ),
@@ -139,32 +183,46 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                 spacing=spacing.GAP,
             ),
 
-            card(
-                ft.Column(
-                    [
-                        ft.Text("Current Session", size=14, color=colors.EJ6_GREEN),
-                        ft.Text(session_text(project_id), size=14, color=colors.TEXT),
-                    ],
-                    spacing=spacing.SMALL_GAP,
-                ),
-                accent="purple",
+            ft.Row(
+                [
+                    ft.Container(memory_list_card("Recent Discoveries", get_recent_discoveries(project_id)), expand=1),
+                    ft.Container(memory_list_card("Recent Dreams", get_recent_dreams(project_id)), expand=1),
+                ],
+                spacing=spacing.GAP,
             ),
+
+            memory_list_card("Recent History", get_history(project_id)),
         ],
         spacing=spacing.GAP,
         scroll=ft.ScrollMode.AUTO,
     )
 
 
-def session_text(project_id):
-    session = get_active_session()
+def memory_list_card(title, items):
+    if not items:
+        rows = [ft.Text("Nothing here yet.", size=13, color=colors.MUTED)]
+    else:
+        rows = [
+            ft.Column(
+                [
+                    ft.Text(item.get("time", ""), size=11, color=colors.MAJIN_PURPLE),
+                    ft.Text(item.get("text", ""), size=13, color=colors.TEXT),
+                ],
+                spacing=2,
+            )
+            for item in items
+        ]
 
-    if not session:
-        return "No active session. Press Continue when you're ready."
-
-    if session.get("project_id") != project_id:
-        return f"Active session is currently in {session.get('project_name')}."
-
-    return session.get("goal") or "Session active. Add the objective inside the session screen."
+    return card(
+        ft.Column(
+            [
+                ft.Text(title, size=14, color=colors.EJ6_GREEN),
+                *rows,
+            ],
+            spacing=spacing.SMALL_GAP,
+        ),
+        accent="purple",
+    )
 
 
 def open_folder(project, feedback):

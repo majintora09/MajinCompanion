@@ -9,12 +9,22 @@
     "status": "Maintenance & upgrades.",
     "color": "purple"
   },
-  "mission": "",
-  "notes": "",
+  "mission": {
+    "title": "",
+    "updated": "2026-07-06 23:52"
+  },
+  "session": {
+    "active": false,
+    "started": "",
+    "goal": ""
+  },
+  "notes": {
+    "text": "",
+    "updated": "2026-07-06 23:52"
+  },
   "dreams": [],
   "discoveries": [],
   "history": [],
-  "sessions": [],
   "links": {
     "folder": "C:\\Users\\Tora\\EJ6-hub\\ej6-garage",
     "website": "https://ej6-garage-main-pe5bqi.laravel.cloud/",
@@ -22,6 +32,7 @@
   },
   "metadata": {
     "created": "2026-07-06 23:52",
-    "last_updated": "2026-07-06 23:52"
-  }
+    "last_updated": "2026-07-07 00:22"
+  },
+  "sessions": []
 }

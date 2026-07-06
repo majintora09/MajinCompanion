@@ -9,12 +9,22 @@
     "status": "Community racing.",
     "color": "green"
   },
-  "mission": "",
-  "notes": "",
+  "mission": {
+    "title": "",
+    "updated": "2026-07-06 23:52"
+  },
+  "session": {
+    "active": false,
+    "started": "",
+    "goal": ""
+  },
+  "notes": {
+    "text": "",
+    "updated": "2026-07-06 23:52"
+  },
   "dreams": [],
   "discoveries": [],
   "history": [],
-  "sessions": [],
   "links": {
     "folder": "C:\\Users\\Tora\\leaderboard-hub",
     "website": "https://backfishracers.up.railway.app/",
@@ -22,6 +32,7 @@
   },
   "metadata": {
     "created": "2026-07-06 23:52",
-    "last_updated": "2026-07-06 23:52"
-  }
+    "last_updated": "2026-07-07 00:22"
+  },
+  "sessions": []
 }
