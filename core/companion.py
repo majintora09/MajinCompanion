@@ -18,6 +18,7 @@ from screens.projects import workshop
 from screens.session import session_screen
 from screens.brain import brain_screen
 from screens.workbench import workbench_screen
+from places.manager import ensure_all_brains
 
 
 class Companion:
@@ -28,6 +29,7 @@ class Companion:
         self.current_workbench_project_id = None
 
         ensure_all_project_brains(PROJECTS)
+        ensure_all_brains(PROJECTS)
 
         self.goal_input = ft.TextField(
             hint_text="What matters right now?",

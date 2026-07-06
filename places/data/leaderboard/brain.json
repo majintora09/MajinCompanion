@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "id": "leaderboard",
+    "name": "Homies Leaderboard",
+    "nickname": "The Leaderboard",
+    "icon": "\ud83c\udfc6",
+    "priority": 5,
+    "momentum": 30,
+    "status": "Community racing.",
+    "color": "green"
+  },
+  "mission": "",
+  "notes": "",
+  "dreams": [],
+  "discoveries": [],
+  "history": [],
+  "sessions": [],
+  "links": {
+    "folder": "C:\\Users\\Tora\\leaderboard-hub",
+    "website": "https://backfishracers.up.railway.app/",
+    "github": "https://github.com/majintora09/leaderboard-hub"
+  },
+  "metadata": {
+    "created": "2026-07-06 23:52",
+    "last_updated": "2026-07-06 23:52"
+  }
+}

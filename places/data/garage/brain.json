@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "id": "garage",
+    "name": "Majin Garage",
+    "nickname": "The Garage",
+    "icon": "\ud83d\ude97",
+    "priority": 2,
+    "momentum": 45,
+    "status": "Maintenance & upgrades.",
+    "color": "purple"
+  },
+  "mission": "",
+  "notes": "",
+  "dreams": [],
+  "discoveries": [],
+  "history": [],
+  "sessions": [],
+  "links": {
+    "folder": "C:\\Users\\Tora\\EJ6-hub\\ej6-garage",
+    "website": "https://ej6-garage-main-pe5bqi.laravel.cloud/",
+    "github": "https://github.com/majintora09/ej6-garage"
+  },
+  "metadata": {
+    "created": "2026-07-06 23:52",
+    "last_updated": "2026-07-06 23:52"
+  }
+}

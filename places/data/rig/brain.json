@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "id": "rig",
+    "name": "Majin Rig MK1",
+    "nickname": "The Rig",
+    "icon": "\ud83d\udee0\ufe0f",
+    "priority": 1,
+    "momentum": 80,
+    "status": "Designing the sim rig platform.",
+    "color": "green"
+  },
+  "mission": "",
+  "notes": "",
+  "dreams": [],
+  "discoveries": [],
+  "history": [],
+  "sessions": [],
+  "links": {
+    "folder": "D:\\MAJIN RIG MK-1",
+    "website": null,
+    "github": "https://github.com/majintora09/MAJIN-RIG-MK1"
+  },
+  "metadata": {
+    "created": "2026-07-06 23:52",
+    "last_updated": "2026-07-06 23:52"
+  }
+}

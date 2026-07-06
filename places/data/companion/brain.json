@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "id": "companion",
+    "name": "Majin Companion",
+    "nickname": "Companion",
+    "icon": "\ud83d\udd25",
+    "priority": 0,
+    "momentum": 95,
+    "status": "Building Yuri's personal OS.",
+    "color": "purple"
+  },
+  "mission": "",
+  "notes": "",
+  "dreams": [],
+  "discoveries": [],
+  "history": [],
+  "sessions": [],
+  "links": {
+    "folder": "D:\\Majin Companion",
+    "website": null,
+    "github": "https://github.com/majintora09/MajinCompanion"
+  },
+  "metadata": {
+    "created": "2026-07-06 23:52",
+    "last_updated": "2026-07-06 23:52"
+  }
+}

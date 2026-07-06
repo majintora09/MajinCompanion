@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "id": "riftlab",
+    "name": "RiftLab",
+    "nickname": "The Lab",
+    "icon": "\ud83e\udd4a",
+    "priority": 3,
+    "momentum": 60,
+    "status": "FG knowledge system.",
+    "color": "green"
+  },
+  "mission": "",
+  "notes": "",
+  "dreams": [],
+  "discoveries": [],
+  "history": [],
+  "sessions": [],
+  "links": {
+    "folder": "C:\\Users\\Tora\\Documents\\DBFZ TEAM BUILDER",
+    "website": "https://riftlab.pages.dev/",
+    "github": "https://github.com/majintora09/RiftLab"
+  },
+  "metadata": {
+    "created": "2026-07-06 23:52",
+    "last_updated": "2026-07-06 23:52"
+  }
+}

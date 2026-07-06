@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "id": "portfolio",
+    "name": "Majin Portfolio",
+    "nickname": "The Portfolio",
+    "icon": "\ud83c\udf10",
+    "priority": 4,
+    "momentum": 35,
+    "status": "Show the world.",
+    "color": "purple"
+  },
+  "mission": "",
+  "notes": "",
+  "dreams": [],
+  "discoveries": [],
+  "history": [],
+  "sessions": [],
+  "links": {
+    "folder": "C:\\Users\\Tora\\Documents\\portfoliooo\\MainHub",
+    "website": "https://mainhub-5bg.pages.dev/#home",
+    "github": "https://github.com/majintora09/MainHub"
+  },
+  "metadata": {
+    "created": "2026-07-06 23:52",
+    "last_updated": "2026-07-06 23:52"
+  }
+}
