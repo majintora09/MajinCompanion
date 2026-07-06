@@ -15,7 +15,7 @@ from places.brain import (
 )
 from places.future import future_yuri_message
 from memory.sessions import start_session, get_active_session
-from components.card import card
+from components.section import section
 from components.button import primary_button, quiet_button
 from themes import colors, spacing
 
@@ -105,44 +105,40 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
         [
             quiet_button("Back to Workshop", icon=ft.Icons.ARROW_BACK, on_click=lambda e: on_back()),
 
-            card(
-                ft.Column(
-                    [
-                        ft.Text(f"{project['icon']}  {project.get('nickname', project['name'])}", size=34, weight=ft.FontWeight.BOLD),
-                        ft.Text(project["status"], size=14, color=colors.MUTED),
-                        ft.Text("Let's pick it back up.", size=16, color=colors.TEXT),
-                        ft.Text(future_yuri_message(project_id), size=14, color=colors.MAJIN_PURPLE),
-                        ft.Row(
-                            [
-                                primary_button("Continue", icon=ft.Icons.PLAY_ARROW, on_click=continue_place),
-                                quiet_button("Folder", icon=ft.Icons.FOLDER_OPEN, on_click=lambda e: open_folder(project, feedback)),
-                                quiet_button("Website", icon=ft.Icons.LANGUAGE, on_click=lambda e: open_url(project.get("url"), "website", feedback)),
-                                quiet_button("GitHub", icon=ft.Icons.CODE, on_click=lambda e: open_url(project.get("github"), "GitHub", feedback)),
-                                quiet_button("VS Code", icon=ft.Icons.TERMINAL, on_click=lambda e: open_vscode(project, feedback)),
-                            ],
-                            spacing=spacing.SMALL_GAP,
-                            wrap=True,
-                        ),
-                        feedback,
-                    ],
-                    spacing=spacing.SMALL_GAP,
-                ),
-                accent=project["color"],
+            ft.Text(f"{project['icon']}  {project.get('nickname', project['name'])}", size=38, weight=ft.FontWeight.BOLD),
+            ft.Text(project["status"], size=14, color=colors.MUTED),
+            ft.Text("Let's pick it back up.", size=17, color=colors.TEXT),
+            ft.Text(future_yuri_message(project_id), size=14, color=colors.MAJIN_PURPLE),
+
+            ft.Row(
+                [
+                    primary_button("Continue", icon=ft.Icons.PLAY_ARROW, on_click=continue_place),
+                    quiet_button("Folder", icon=ft.Icons.FOLDER_OPEN, on_click=lambda e: open_folder(project, feedback)),
+                    quiet_button("Website", icon=ft.Icons.LANGUAGE, on_click=lambda e: open_url(project.get("url"), "website", feedback)),
+                    quiet_button("GitHub", icon=ft.Icons.CODE, on_click=lambda e: open_url(project.get("github"), "GitHub", feedback)),
+                    quiet_button("VS Code", icon=ft.Icons.TERMINAL, on_click=lambda e: open_vscode(project, feedback)),
+                ],
+                spacing=spacing.SMALL_GAP,
+                wrap=True,
             ),
+
+            feedback,
+
+            ft.Divider(height=30, color=colors.BORDER),
 
             ft.Row(
                 [
                     ft.Container(
-                        card(
+                        section(
+                            "Live Notes",
                             ft.Column(
                                 [
-                                    ft.Text("Live Notes", size=14, color=colors.EJ6_GREEN),
-                                    ft.Text("What should Future Yuri remember here?", size=12, color=colors.MUTED),
                                     notes_input,
                                     primary_button("Save notes", icon=ft.Icons.SAVE, on_click=save_notes),
                                 ],
                                 spacing=spacing.SMALL_GAP,
                             ),
+                            subtitle="What should Future Yuri remember here?",
                             accent="green",
                         ),
                         expand=2,
@@ -150,28 +146,28 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                     ft.Container(
                         ft.Column(
                             [
-                                card(
+                                section(
+                                    "Quick Dream",
                                     ft.Column(
                                         [
-                                            ft.Text("Quick Dream", size=14, color=colors.EJ6_GREEN),
-                                            ft.Text("Ideas that are not actionable yet.", size=12, color=colors.MUTED),
                                             dream_input,
                                             primary_button("Save dream", icon=ft.Icons.AUTO_AWESOME, on_click=save_dream_clicked),
                                         ],
                                         spacing=spacing.SMALL_GAP,
                                     ),
+                                    subtitle="Ideas that are not actionable yet.",
                                     accent="purple",
                                 ),
-                                card(
+                                section(
+                                    "Discovery",
                                     ft.Column(
                                         [
-                                            ft.Text("Discovery", size=14, color=colors.EJ6_GREEN),
-                                            ft.Text("What did we learn that Future Yuri will need?", size=12, color=colors.MUTED),
                                             discovery_input,
                                             primary_button("Save discovery", icon=ft.Icons.LIGHTBULB, on_click=save_discovery_clicked),
                                         ],
                                         spacing=spacing.SMALL_GAP,
                                     ),
+                                    subtitle="What did we learn that Future Yuri will need?",
                                     accent="green",
                                 ),
                             ],
@@ -185,20 +181,20 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
 
             ft.Row(
                 [
-                    ft.Container(memory_list_card("Recent Discoveries", get_recent_discoveries(project_id)), expand=1),
-                    ft.Container(memory_list_card("Recent Dreams", get_recent_dreams(project_id)), expand=1),
+                    ft.Container(memory_section("Recent Discoveries", get_recent_discoveries(project_id), "purple"), expand=1),
+                    ft.Container(memory_section("Recent Dreams", get_recent_dreams(project_id), "green"), expand=1),
                 ],
                 spacing=spacing.GAP,
             ),
 
-            memory_list_card("Recent History", get_history(project_id)),
+            memory_section("Recent History", get_history(project_id), "purple"),
         ],
         spacing=spacing.GAP,
         scroll=ft.ScrollMode.AUTO,
     )
 
 
-def memory_list_card(title, items):
+def memory_section(title, items, accent):
     if not items:
         rows = [ft.Text("Nothing here yet.", size=13, color=colors.MUTED)]
     else:
@@ -213,15 +209,10 @@ def memory_list_card(title, items):
             for item in items
         ]
 
-    return card(
-        ft.Column(
-            [
-                ft.Text(title, size=14, color=colors.EJ6_GREEN),
-                *rows,
-            ],
-            spacing=spacing.SMALL_GAP,
-        ),
-        accent="purple",
+    return section(
+        title,
+        ft.Column(rows, spacing=spacing.SMALL_GAP),
+        accent=accent,
     )
 
 
