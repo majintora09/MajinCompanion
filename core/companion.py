@@ -2,23 +2,17 @@ import flet as ft
 
 from core import screen
 from core.thoughts import get_campfire_thought
-from core.project_state import PROJECT
-from memory.goals import save_today_goal
+from memory.goals import save_today_goal, get_today_goal
 from memory.dreams import save_dream
 from memory.activity import log_activity
 from memory.sessions import get_active_session, get_last_session, start_session
 from projects.registry import PROJECTS
-from projects.brains import ensure_all_project_brains
 from themes import colors, spacing
 from components.card import card
-from components.button import primary_button
+from components.button import primary_button, quiet_button
 from components.hero import hero
-from components.timeline import timeline_card
-from components.activity import activity_card
-from components.stats import stats_card
 from components.background import grid_background
 from components.quick_launch import quick_launch_card
-from components.dream_review import dream_review_card
 from screens.memory_screens import dreams_screen, goals_screen, timeline_screen
 from screens.projects import workshop
 from screens.session import session_screen
@@ -29,21 +23,19 @@ class Companion:
         self.page = page
         self.current_screen = screen.HOME
 
-        ensure_all_project_brains(PROJECTS)
+        self.goal_input = ft.TextField(
+            hint_text="What matters right now?",
+            border_color=colors.EJ6_GREEN,
+            focused_border_color=colors.MAJIN_PURPLE,
+        )
 
         self.dream_input = ft.TextField(
-            hint_text="Drop the 2AM idea here...",
+            hint_text="Catch the thought before it disappears...",
             multiline=True,
             min_lines=2,
             max_lines=4,
             border_color=colors.MAJIN_PURPLE,
             focused_border_color=colors.EJ6_GREEN,
-        )
-
-        self.goal_input = ft.TextField(
-            hint_text="What are we trying to do today?",
-            border_color=colors.EJ6_GREEN,
-            focused_border_color=colors.MAJIN_PURPLE,
         )
 
     def start(self):
@@ -105,78 +97,123 @@ class Companion:
         if self.current_screen == screen.SESSION:
             return session_screen(self.back_home, self.toast)
 
-        return self.home_screen()
+        return self.campfire()
 
-    def home_screen(self):
+    def campfire(self):
         return ft.Column(
             [
-                self.continue_card(),
+                self.where_were_we_card(),
 
                 ft.Row(
                     [
-                        ft.Container(self.goal_card(), expand=1),
-                        ft.Container(self.campfire_thoughts(), expand=1),
+                        ft.Container(self.mission_card(), expand=1),
+                        ft.Container(self.thought_card(), expand=1),
                     ],
                     spacing=spacing.GAP,
                 ),
 
-                ft.Row(
-                    [
-                        ft.Container(self.dream_card(), expand=1),
-                        ft.Container(activity_card(), expand=1),
-                    ],
-                    spacing=spacing.GAP,
-                ),
+                self.workshop_summary_card(),
 
-                ft.Row(
-                    [
-                        ft.Container(dream_review_card(), expand=1),
-                        ft.Container(stats_card(), expand=1),
-                    ],
-                    spacing=spacing.GAP,
+                quiet_button(
+                    "Open Workshop",
+                    icon=ft.Icons.HANDYMAN,
+                    on_click=lambda e: self.navigate(screen.PROJECTS),
                 ),
-
-                quick_launch_card(self.navigate),
             ],
             spacing=spacing.GAP,
         )
 
-    def continue_card(self):
+    def where_were_we_card(self):
         session = get_last_session()
 
         if not session:
             return card(
                 ft.Column(
                     [
-                        ft.Text("Campfire", size=14, color=colors.EJ6_GREEN),
-                        ft.Text("No previous session yet.", size=24, weight=ft.FontWeight.BOLD),
-                        ft.Text("Start from the Workshop when you're ready.", color=colors.MUTED),
+                        ft.Text("Where were we?", size=14, color=colors.EJ6_GREEN),
+                        ft.Text("Nothing waiting yet.", size=28, weight=ft.FontWeight.BOLD),
+                        ft.Text("Open the Workshop and start from a Place.", color=colors.MUTED),
                     ],
                     spacing=spacing.SMALL_GAP,
                 ),
                 accent="purple",
             )
 
-        is_active = get_active_session() is not None
-
-        button_text = "Continue session" if is_active else "Continue project"
+        active = get_active_session() is not None
+        button_text = "Continue session" if active else "Continue project"
 
         return card(
             ft.Column(
                 [
-                    ft.Text("Last Worked On", size=14, color=colors.EJ6_GREEN),
+                    ft.Text("Where were we?", size=14, color=colors.EJ6_GREEN),
                     ft.Text(
                         f"{session['project_icon']}  {session['project_name']}",
-                        size=26,
+                        size=30,
                         weight=ft.FontWeight.BOLD,
                     ),
                     ft.Text(f"Started: {session.get('started', 'Unknown')}", size=13, color=colors.MUTED),
                     ft.Text(
-                        session.get("goal") or session.get("summary") or "Ready to pick it back up.",
+                        session.get("goal")
+                        or session.get("summary")
+                        or session.get("notes")
+                        or "Ready to pick it back up.",
                         size=15,
                         color=colors.TEXT,
                     ),
-                    primary_button(button_text, icon=ft.Icons.PLAY_ARROW, on_click=lambda e: self.continue_last(session)),
+                    primary_button(
+                        button_text,
+                        icon=ft.Icons.PLAY_ARROW,
+                        on_click=lambda e: self.continue_last(session),
+                    ),
+                ],
+                spacing=spacing.SMALL_GAP,
+            ),
+            accent="green",
+        )
+
+    def mission_card(self):
+        goal = get_today_goal()
+
+        return card(
+            ft.Column(
+                [
+                    ft.Text("Current Mission", size=14, color=colors.EJ6_GREEN),
+                    ft.Text(goal if goal else "No mission set.", size=16, color=colors.TEXT),
+                    self.goal_input,
+                    primary_button("Set mission", icon=ft.Icons.FLAG, on_click=self.save_goal_clicked),
+                ],
+                spacing=spacing.SMALL_GAP,
+            ),
+            accent="green",
+        )
+
+    def thought_card(self):
+        return card(
+            ft.Column(
+                [
+                    ft.Text("Campfire Thought", size=14, color=colors.EJ6_GREEN),
+                    ft.Text(get_campfire_thought(), size=15, color=colors.TEXT),
+                ],
+                spacing=spacing.SMALL_GAP,
+            ),
+            accent="purple",
+        )
+
+    def workshop_summary_card(self):
+        most_momentum = max(PROJECTS, key=lambda p: p.get("momentum", 0))
+
+        return card(
+            ft.Column(
+                [
+                    ft.Text("Workshop", size=14, color=colors.EJ6_GREEN),
+                    ft.Text(f"{len(PROJECTS)} Places waiting.", size=20, weight=ft.FontWeight.BOLD),
+                    ft.Text(
+                        f"Most momentum: {most_momentum['icon']} {most_momentum['name']} "
+                        f"({most_momentum.get('momentum', 0)})",
+                        size=14,
+                        color=colors.TEXT,
+                    ),
+                    ft.Text("Places are dreams that decided to exist.", size=12, color=colors.MUTED),
                 ],
                 spacing=spacing.SMALL_GAP,
             ),
@@ -193,76 +230,36 @@ class Companion:
         project = next((p for p in PROJECTS if p["id"] == session["project_id"]), None)
 
         if not project:
-            self.toast("Project not found anymore bro.")
+            self.toast("Project not found anymore.")
             return
 
         start_session(project)
         self.open_session()
 
-    def dream_card(self):
-        return card(
-            ft.Column(
-                [
-                    ft.Text("Dream Mode", size=14, color=colors.EJ6_GREEN),
-                    ft.Text("I got it. Let's not lose the thought.", size=14),
-                    self.dream_input,
-                    primary_button("Save dream", icon=ft.Icons.AUTO_AWESOME, on_click=self.save_dream_clicked),
-                ],
-                spacing=spacing.SMALL_GAP,
-            ),
-            accent="purple",
-        )
+    def save_goal_clicked(self, e):
+        text = self.goal_input.value
 
-    def goal_card(self):
-        return card(
-            ft.Column(
-                [
-                    ft.Text("Today's Goal", size=14, color=colors.EJ6_GREEN),
-                    ft.Text("Set the mission. Campfire will keep us pointed at it.", size=14, color=colors.TEXT),
-                    self.goal_input,
-                    primary_button("Save goal", icon=ft.Icons.FLAG, on_click=self.save_goal_clicked),
-                ],
-                spacing=spacing.SMALL_GAP,
-            ),
-            accent="green",
-        )
+        if not text or not text.strip():
+            self.toast("Give me a mission first.")
+            return
 
-    def campfire_thoughts(self):
-        return card(
-            ft.Column(
-                [
-                    ft.Text("Campfire Thoughts", size=14, color=colors.EJ6_GREEN),
-                    ft.Text(get_campfire_thought(), size=15, color=colors.TEXT),
-                ],
-                spacing=spacing.SMALL_GAP,
-            ),
-            accent="purple",
-        )
+        save_today_goal(text)
+        log_activity("🎯 Set Current Mission")
+        self.goal_input.value = ""
+        self.render()
+        self.toast("Mission set.")
 
     def save_dream_clicked(self, e):
         text = self.dream_input.value
 
         if not text or not text.strip():
-            self.toast("Drop an idea first bro.")
+            self.toast("Drop an idea first.")
             return
 
         save_dream(text)
         self.dream_input.value = ""
         self.render()
-        self.toast("Dream saved. I got you.")
-
-    def save_goal_clicked(self, e):
-        text = self.goal_input.value
-
-        if not text or not text.strip():
-            self.toast("Give me a goal first bro.")
-            return
-
-        save_today_goal(text)
-        log_activity("🎯 Set Today's Goal")
-        self.goal_input.value = ""
-        self.render()
-        self.toast("Goal saved. We know where we're going.")
+        self.toast("Dream saved.")
 
     def toast(self, message):
         self.page.snack_bar = ft.SnackBar(ft.Text(message))

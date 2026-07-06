@@ -9,10 +9,10 @@ def get_greeting():
     hour = datetime.now().hour
 
     if hour < 12:
-        return "Good morning, Yuri."
+        return "Morning."
     if hour < 18:
-        return "Yo bro, welcome back."
-    return "Good evening, Yuri."
+        return "Afternoon."
+    return "Evening."
 
 
 def hero():
@@ -20,8 +20,8 @@ def hero():
         [
             ft.Text("🔥", size=44),
             ft.Text(get_greeting(), size=typography.TITLE, weight=ft.FontWeight.BOLD),
-            ft.Text("Your workshop is ready.", size=typography.BODY, color=colors.MUTED),
-            ft.Text(f"Majin Companion v{VERSION} — {CODENAME}", size=typography.SMALL, color=colors.MAJIN_PURPLE),
+            ft.Text("Where were we?", size=typography.BODY, color=colors.MUTED),
+            ft.Text(f"v{VERSION} — {CODENAME}", size=typography.SMALL, color=colors.MAJIN_PURPLE),
         ],
         spacing=8,
     )
