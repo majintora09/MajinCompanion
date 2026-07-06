@@ -17,6 +17,7 @@ from screens.memory_screens import dreams_screen, goals_screen, timeline_screen
 from screens.projects import workshop
 from screens.session import session_screen
 from screens.brain import brain_screen
+from screens.workbench import workbench_screen
 
 
 class Companion:
@@ -24,6 +25,7 @@ class Companion:
         self.page = page
         self.current_screen = screen.HOME
         self.current_brain_project_id = None
+        self.current_workbench_project_id = None
 
         ensure_all_project_brains(PROJECTS)
 
@@ -44,13 +46,15 @@ class Companion:
 
     def start(self):
         log_activity("🔥 Opened Companion")
+
+        self.page.window.width = 1200
+        self.page.window.height = 780
+
         self.render()
 
     def render(self):
         self.page.title = "Majin Companion"
         self.page.theme_mode = ft.ThemeMode.DARK
-        self.page.window.width = 1200
-        self.page.window.height = 780
         self.page.bgcolor = colors.BG
         self.page.padding = 0
         self.page.scroll = ft.ScrollMode.AUTO
@@ -91,6 +95,12 @@ class Companion:
         log_activity(f"🧠 Opened brain: {project_id}")
         self.render()
 
+    def open_workbench(self, project_id):
+        self.current_workbench_project_id = project_id
+        self.current_screen = screen.WORKBENCH
+        log_activity(f"🛠 Opened workbench: {project_id}")
+        self.render()
+
     def screen_content(self):
         if self.current_screen == screen.DREAMS:
             return dreams_screen(self.navigate)
@@ -102,7 +112,13 @@ class Companion:
             return timeline_screen(self.navigate)
 
         if self.current_screen == screen.PROJECTS:
-            return workshop(self.back_home, self.toast, self.open_session, self.open_brain)
+            return workshop(
+                self.back_home,
+                self.toast,
+                self.open_session,
+                self.open_brain,
+                self.open_workbench,
+            )
 
         if self.current_screen == screen.SESSION:
             return session_screen(self.back_home, self.toast)
@@ -110,6 +126,14 @@ class Companion:
         if self.current_screen == screen.BRAIN:
             return brain_screen(
                 self.current_brain_project_id,
+                lambda: self.navigate(screen.PROJECTS),
+                self.toast,
+                self.open_session,
+            )
+
+        if self.current_screen == screen.WORKBENCH:
+            return workbench_screen(
+                self.current_workbench_project_id,
                 lambda: self.navigate(screen.PROJECTS),
                 self.toast,
                 self.open_session,
@@ -226,7 +250,7 @@ class Companion:
                     ft.Text("Workshop", size=14, color=colors.EJ6_GREEN),
                     ft.Text(f"{len(PROJECTS)} Places waiting.", size=20, weight=ft.FontWeight.BOLD),
                     ft.Text(
-                        f"Most momentum: {most_momentum['icon']} {most_momentum['name']} "
+                        f"Most momentum: {most_momentum['icon']} {most_momentum.get('nickname', most_momentum['name'])} "
                         f"({most_momentum.get('momentum', 0)})",
                         size=14,
                         color=colors.TEXT,

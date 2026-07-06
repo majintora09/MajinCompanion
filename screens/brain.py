@@ -42,6 +42,8 @@ def brain_screen(project_id, on_back, on_message, on_continue):
     sessions = get_project_sessions(project_id, limit=5)
     stats = get_project_stats(project_id)
 
+    feedback = ft.Text("", size=13, color=colors.EJ6_GREEN)
+
     notes_input = ft.TextField(
         value=notes,
         multiline=True,
@@ -53,6 +55,8 @@ def brain_screen(project_id, on_back, on_message, on_continue):
 
     def save_notes(e):
         write_text_file(project_id, "notes.md", notes_input.value)
+        feedback.value = "Notes saved. Future Yuri has it."
+        feedback.update()
         on_message("Notes saved.")
 
     def continue_place(e):
@@ -124,6 +128,7 @@ def brain_screen(project_id, on_back, on_message, on_continue):
                         ft.Text("What should Future Yuri remember about this Place?", size=12, color=colors.MUTED),
                         notes_input,
                         primary_button("Save notes", icon=ft.Icons.SAVE, on_click=save_notes),
+                        feedback,
                     ],
                     spacing=spacing.SMALL_GAP,
                 ),

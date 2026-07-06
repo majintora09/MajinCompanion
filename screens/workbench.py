@@ -1,0 +1,211 @@
+import os
+import subprocess
+import webbrowser
+import flet as ft
+
+from projects.registry import PROJECTS
+from projects.brains import read_text_file, write_text_file, append_project_dream, append_project_activity
+from memory.sessions import start_session, get_active_session
+from components.card import card
+from components.button import primary_button, quiet_button
+from themes import colors, spacing
+
+
+VS_CODE_PATHS = [
+    r"C:\Users\Tora\AppData\Local\Programs\Microsoft VS Code\Code.exe",
+    r"C:\Program Files\Microsoft VS Code\Code.exe",
+    r"C:\Program Files (x86)\Microsoft VS Code\Code.exe",
+]
+
+
+def workbench_screen(project_id, on_back, on_message, on_open_session):
+    project = next((p for p in PROJECTS if p["id"] == project_id), None)
+
+    if not project:
+        return ft.Column(
+            [
+                quiet_button("Back", icon=ft.Icons.ARROW_BACK, on_click=lambda e: on_back()),
+                ft.Text("Place not found.", size=24),
+            ],
+            spacing=spacing.GAP,
+        )
+
+    notes_value = read_text_file(project_id, "notes.md", "# Notes\n")
+
+    notes_input = ft.TextField(
+        value=notes_value,
+        multiline=True,
+        min_lines=8,
+        max_lines=14,
+        border_color=colors.EJ6_GREEN,
+        focused_border_color=colors.MAJIN_PURPLE,
+    )
+
+    dream_input = ft.TextField(
+        hint_text="Drop a Place-specific dream here...",
+        multiline=True,
+        min_lines=2,
+        max_lines=4,
+        border_color=colors.MAJIN_PURPLE,
+        focused_border_color=colors.EJ6_GREEN,
+    )
+
+    feedback = ft.Text("", size=13, color=colors.EJ6_GREEN)
+
+    def save_notes(e):
+        write_text_file(project_id, "notes.md", notes_input.value)
+        append_project_activity(project_id, "📝 Notes updated from Workbench")
+        feedback.value = "Notes saved. Future Yuri has it."
+        feedback.update()
+
+    def save_dream(e):
+        if not dream_input.value or not dream_input.value.strip():
+            feedback.value = "Drop an idea first."
+            feedback.update()
+            return
+
+        append_project_dream(project_id, dream_input.value)
+        append_project_activity(project_id, f"🧠 Dream saved: {dream_input.value.strip()}")
+        dream_input.value = ""
+        feedback.value = "Dream saved to this Place."
+        dream_input.update()
+        feedback.update()
+
+    def continue_place(e):
+        start_session(project)
+        on_open_session()
+
+    return ft.Column(
+        [
+            quiet_button("Back to Workshop", icon=ft.Icons.ARROW_BACK, on_click=lambda e: on_back()),
+
+            card(
+                ft.Column(
+                    [
+                        ft.Text(f"{project['icon']}  {project.get('nickname', project['name'])}", size=34, weight=ft.FontWeight.BOLD),
+                        ft.Text(project["status"], size=14, color=colors.MUTED),
+                        ft.Text("Let's pick it back up.", size=16, color=colors.TEXT),
+                        ft.Row(
+                            [
+                                primary_button("Continue", icon=ft.Icons.PLAY_ARROW, on_click=continue_place),
+                                quiet_button("Folder", icon=ft.Icons.FOLDER_OPEN, on_click=lambda e: open_folder(project, feedback)),
+                                quiet_button("Website", icon=ft.Icons.LANGUAGE, on_click=lambda e: open_url(project.get("url"), "website", feedback)),
+                                quiet_button("GitHub", icon=ft.Icons.CODE, on_click=lambda e: open_url(project.get("github"), "GitHub", feedback)),
+                                quiet_button("VS Code", icon=ft.Icons.TERMINAL, on_click=lambda e: open_vscode(project, feedback)),
+                            ],
+                            spacing=spacing.SMALL_GAP,
+                            wrap=True,
+                        ),
+                        feedback,
+                    ],
+                    spacing=spacing.SMALL_GAP,
+                ),
+                accent=project["color"],
+            ),
+
+            ft.Row(
+                [
+                    ft.Container(
+                        card(
+                            ft.Column(
+                                [
+                                    ft.Text("Live Notes", size=14, color=colors.EJ6_GREEN),
+                                    ft.Text("What should Future Yuri remember here?", size=12, color=colors.MUTED),
+                                    notes_input,
+                                    primary_button("Save notes", icon=ft.Icons.SAVE, on_click=save_notes),
+                                ],
+                                spacing=spacing.SMALL_GAP,
+                            ),
+                            accent="green",
+                        ),
+                        expand=2,
+                    ),
+                    ft.Container(
+                        card(
+                            ft.Column(
+                                [
+                                    ft.Text("Quick Dream", size=14, color=colors.EJ6_GREEN),
+                                    ft.Text("Ideas for this Place only.", size=12, color=colors.MUTED),
+                                    dream_input,
+                                    primary_button("Save dream", icon=ft.Icons.AUTO_AWESOME, on_click=save_dream),
+                                ],
+                                spacing=spacing.SMALL_GAP,
+                            ),
+                            accent="purple",
+                        ),
+                        expand=1,
+                    ),
+                ],
+                spacing=spacing.GAP,
+            ),
+
+            card(
+                ft.Column(
+                    [
+                        ft.Text("Current Session", size=14, color=colors.EJ6_GREEN),
+                        ft.Text(session_text(project_id), size=14, color=colors.TEXT),
+                    ],
+                    spacing=spacing.SMALL_GAP,
+                ),
+                accent="purple",
+            ),
+        ],
+        spacing=spacing.GAP,
+        scroll=ft.ScrollMode.AUTO,
+    )
+
+
+def session_text(project_id):
+    session = get_active_session()
+
+    if not session:
+        return "No active session. Press Continue when you're ready."
+
+    if session.get("project_id") != project_id:
+        return f"Active session is currently in {session.get('project_name')}."
+
+    return session.get("goal") or "Session active. Add the objective inside the session screen."
+
+
+def open_folder(project, feedback):
+    path = project["path"]
+
+    if not os.path.exists(path):
+        feedback.value = f"Path not found: {path}"
+        feedback.update()
+        return
+
+    os.startfile(path)
+    feedback.value = "Folder opened."
+    feedback.update()
+
+
+def open_url(url, label, feedback):
+    if not url:
+        feedback.value = f"No {label} linked yet."
+        feedback.update()
+        return
+
+    webbrowser.open(url)
+    feedback.value = f"{label} opened."
+    feedback.update()
+
+
+def open_vscode(project, feedback):
+    path = project["path"]
+
+    if not os.path.exists(path):
+        feedback.value = f"Path not found: {path}"
+        feedback.update()
+        return
+
+    exe = next((p for p in VS_CODE_PATHS if os.path.exists(p)), None)
+
+    if not exe:
+        feedback.value = "VS Code not found. Install VS Code or add its path."
+        feedback.update()
+        return
+
+    subprocess.Popen([exe, path])
+    feedback.value = "VS Code opened."
+    feedback.update()

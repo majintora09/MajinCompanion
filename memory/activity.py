@@ -3,6 +3,7 @@ from datetime import datetime
 
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVITY_FILE = ROOT / "memory" / "activity.md"
+ARCHIVE_FILE = ROOT / "memory" / "activity_archive.md"
 
 
 def log_activity(text: str):
@@ -28,3 +29,18 @@ def get_recent_activity(limit=5):
             results.append(lines[1])
 
     return results or ["🔥 Started Companion"]
+
+
+def clear_activity():
+    if not ACTIVITY_FILE.exists():
+        return
+
+    ARCHIVE_FILE.parent.mkdir(exist_ok=True)
+
+    old = ACTIVITY_FILE.read_text(encoding="utf-8")
+
+    with ARCHIVE_FILE.open("a", encoding="utf-8") as archive:
+        archive.write("\n\n# Archived Activity\n")
+        archive.write(old)
+
+    ACTIVITY_FILE.write_text("", encoding="utf-8")
