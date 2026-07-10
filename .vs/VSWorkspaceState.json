@@ -1,8 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\assets"
+    "\\core",
+    "\\places\\data\\riftlab"
   ],
-  "SelectedNode": "\\Majin_Companion_Developer_Bible_v1.0.md",
+  "SelectedNode": "\\core\\version.py",
   "PreviewInSolutionExplorer": false
 }

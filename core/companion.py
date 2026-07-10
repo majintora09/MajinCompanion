@@ -19,6 +19,7 @@ from screens.session import session_screen
 from screens.brain import brain_screen
 from screens.workbench import workbench_screen
 from places.manager import ensure_all_brains
+from future.campfire import campfire_message
 
 
 class Companion:
@@ -175,6 +176,7 @@ class Companion:
                 ft.Column(
                     [
                         ft.Text("Where were we?", size=14, color=colors.EJ6_GREEN),
+                        ft.Text(campfire_message(), size=14, color=colors.MAJIN_PURPLE),
                         ft.Text("Nothing waiting yet.", size=28, weight=ft.FontWeight.BOLD),
                         ft.Text("Open the Workshop and start from a Place.", color=colors.MUTED),
                     ],
@@ -190,6 +192,7 @@ class Companion:
             ft.Column(
                 [
                     ft.Text("Where were we?", size=14, color=colors.EJ6_GREEN),
+                    ft.Text(campfire_message(), size=14, color=colors.MAJIN_PURPLE),
                     ft.Text(
                         f"{session['project_icon']}  {session['project_name']}",
                         size=30,
