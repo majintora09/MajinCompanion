@@ -3,18 +3,21 @@ from places.manager import load_brain, save_brain, now
 
 def get_notes(place_id: str):
     brain = load_brain(place_id)
+
     if not brain:
         return ""
 
     notes = brain.get("notes", "")
+
     if isinstance(notes, dict):
         return notes.get("text", "")
 
-    return notes
+    return str(notes or "")
 
 
 def set_notes(place_id: str, text: str):
     brain = load_brain(place_id)
+
     if not brain:
         return
 
@@ -27,42 +30,81 @@ def set_notes(place_id: str, text: str):
     save_brain(place_id, brain)
 
 
+def append_notes(place_id: str, text: str):
+    existing = get_notes(place_id).strip()
+    addition = text.strip()
+
+    if not addition:
+        return
+
+    updated = f"{existing}\n\n{addition}".strip() if existing else addition
+    set_notes(place_id, updated)
+
+
+def set_mission(place_id: str, title: str):
+    brain = load_brain(place_id)
+
+    if not brain:
+        return
+
+    brain["mission"] = {
+        "title": title.strip(),
+        "updated": now(),
+    }
+
+    add_history_entry(brain, f"🎯 Mission updated: {title.strip()}")
+    save_brain(place_id, brain)
+
+
 def add_dream(place_id: str, text: str):
     brain = load_brain(place_id)
+
     if not brain:
+        return
+
+    text = text.strip()
+
+    if not text:
         return
 
     brain.setdefault("dreams", [])
     brain["dreams"].append(
         {
             "time": now(),
-            "text": text.strip(),
+            "text": text,
         }
     )
 
-    add_history_entry(brain, f"🧠 Dream saved: {text.strip()}")
+    add_history_entry(brain, f"🧠 Dream saved: {text}")
     save_brain(place_id, brain)
 
 
 def add_discovery(place_id: str, text: str):
     brain = load_brain(place_id)
+
     if not brain:
+        return
+
+    text = text.strip()
+
+    if not text:
         return
 
     brain.setdefault("discoveries", [])
     brain["discoveries"].append(
         {
             "time": now(),
-            "text": text.strip(),
+            "text": text,
         }
     )
 
-    add_history_entry(brain, f"💡 Discovery: {text.strip()}")
+    add_history_entry(brain, f"💡 Discovery: {text}")
     save_brain(place_id, brain)
 
 
 def get_recent_dreams(place_id: str, limit=5):
     brain = load_brain(place_id)
+
     if not brain:
         return []
 
@@ -71,6 +113,7 @@ def get_recent_dreams(place_id: str, limit=5):
 
 def get_recent_discoveries(place_id: str, limit=5):
     brain = load_brain(place_id)
+
     if not brain:
         return []
 
@@ -79,6 +122,7 @@ def get_recent_discoveries(place_id: str, limit=5):
 
 def get_history(place_id: str, limit=8):
     brain = load_brain(place_id)
+
     if not brain:
         return []
 

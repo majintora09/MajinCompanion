@@ -1,2 +1,2 @@
-VERSION = "1.0.4"
-CODENAME = "Sections"
+VERSION = "1.1.0"
+CODENAME = "The Chair"
