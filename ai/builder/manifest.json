@@ -1,0 +1,14 @@
+{
+    "id": "builder",
+    "name": "Builder",
+    "role": "Read-only implementation planner",
+    "model": "qwen3:8b",
+    "capabilities": [
+        "reason",
+        "plan",
+        "read_files",
+        "generate_code"
+    ],
+    "can_edit_files": false,
+    "can_run_commands": false
+}

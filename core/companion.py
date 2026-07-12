@@ -136,6 +136,7 @@ class Companion:
 
         if self.current_screen == screen.WORKBENCH:
             return workbench_screen(
+                self.page,
                 self.current_workbench_project_id,
                 lambda: self.navigate(screen.PROJECTS),
                 self.toast,

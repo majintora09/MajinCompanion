@@ -4,11 +4,12 @@ import webbrowser
 
 import flet as ft
 
+from ai.builder import BuilderWorker
 from ai.chair import ask_future_yuri
-from ai.client import OllamaError
 from components.button import primary_button, quiet_button
+from components.chat_panel import ChatPanel
 from components.section import section
-from memory.sessions import get_active_session, start_session
+from memory.sessions import start_session
 from places.brain import (
     add_discovery,
     add_dream,
@@ -32,7 +33,13 @@ VS_CODE_PATHS = [
 ]
 
 
-def workbench_screen(project_id, on_back, on_message, on_open_session):
+def workbench_screen(
+    page,
+    project_id,
+    on_back,
+    on_message,
+    on_open_session,
+):
     project = next(
         (item for item in PROJECTS if item["id"] == project_id),
         None,
@@ -51,8 +58,9 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
             spacing=spacing.GAP,
         )
 
-    conversation: list[dict[str, str]] = []
-    latest_answer = {"text": ""}
+    future_conversation = []
+    builder_conversation = []
+    builder_worker = BuilderWorker()
 
     notes_input = ft.TextField(
         value=get_notes(project_id),
@@ -87,52 +95,8 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
         color=colors.EJ6_GREEN,
     )
 
-    chair_messages = ft.Column(
-        [
-            message_bubble(
-                "Future Yuri",
-                future_yuri_message(project_id),
-                is_user=False,
-            )
-        ],
-        spacing=12,
-        scroll=ft.ScrollMode.AUTO,
-    )
-
-    chair_input = ft.TextField(
-        hint_text="What's blocking us?",
-        multiline=True,
-        min_lines=1,
-        max_lines=5,
-        border_color=colors.MAJIN_PURPLE,
-        focused_border_color=colors.EJ6_GREEN,
-        expand=True,
-    )
-
-    chair_status = ft.Text(
-        "Local • qwen3:8b",
-        size=11,
-        color=colors.MUTED,
-    )
-
-    memory_actions = ft.Row(
-        visible=False,
-        wrap=True,
-        spacing=spacing.SMALL_GAP,
-    )
-
-    chair_panel = ft.Container(
-        visible=False,
-        width=470,
-        padding=20,
-        border_radius=18,
-        bgcolor=colors.CARD,
-    )
-
-    chair_toggle_text = ft.Text("🪑 Take a seat")
-
     def save_notes_clicked(e):
-        set_notes(project_id, notes_input.value)
+        set_notes(project_id, notes_input.value or "")
         feedback.value = "Notes saved. Future Yuri has it."
         feedback.update()
 
@@ -170,62 +134,18 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
         start_session(project)
         on_open_session()
 
-    def toggle_chair(e):
-        chair_panel.visible = not chair_panel.visible
-        chair_toggle_text.value = (
-            "Leave the chair"
-            if chair_panel.visible
-            else "🪑 Take a seat"
+    def ask_from_chair(message):
+        answer = ask_future_yuri(
+            place_id=project_id,
+            user_message=message,
+            conversation=future_conversation,
         )
-        chair_toggle_text.update()
-        chair_panel.update()
 
-    def send_to_future_yuri(e):
-        user_text = chair_input.value or ""
-
-        if not user_text.strip():
-            chair_status.value = "Say something first."
-            chair_status.update()
-            return
-
-        clean_text = user_text.strip()
-
-        chair_messages.controls.append(
-            message_bubble("You", clean_text, is_user=True)
-        )
-        chair_input.value = ""
-        chair_input.update()
-
-        chair_status.value = "Thinking with this Place's context..."
-        chair_status.update()
-        chair_messages.update()
-
-        try:
-            answer = ask_future_yuri(
-                place_id=project_id,
-                user_message=clean_text,
-                conversation=conversation,
-            )
-
-        except OllamaError as error:
-            chair_messages.controls.append(
-                message_bubble(
-                    "Future Yuri",
-                    str(error),
-                    is_user=False,
-                    is_error=True,
-                )
-            )
-            chair_status.value = "Connection failed."
-            chair_messages.update()
-            chair_status.update()
-            return
-
-        conversation.extend(
+        future_conversation.extend(
             [
                 {
                     "role": "user",
-                    "content": clean_text,
+                    "content": message,
                 },
                 {
                     "role": "assistant",
@@ -234,139 +154,78 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
             ]
         )
 
-        latest_answer["text"] = answer
+        return answer
 
-        chair_messages.controls.append(
-            message_bubble(
-                "Future Yuri",
-                answer,
-                is_user=False,
-            )
+    def ask_builder(message):
+        answer = builder_worker.ask(
+            place_id=project_id,
+            message=message,
+            external_history=builder_conversation,
         )
 
-        memory_actions.controls = build_memory_actions()
-        memory_actions.visible = True
+        builder_conversation.extend(
+            [
+                {
+                    "role": "user",
+                    "content": message,
+                },
+                {
+                    "role": "assistant",
+                    "content": answer,
+                },
+            ]
+        )
 
-        chair_status.value = "What should I remember?"
-        chair_messages.update()
-        memory_actions.update()
-        chair_status.update()
+        return answer
 
-    def save_answer_as_discovery(e):
-        answer = latest_answer["text"]
-
-        if not answer:
-            return
-
-        add_discovery(project_id, answer)
-        chair_status.value = "Saved as a Discovery."
-        chair_status.update()
-
-    def add_answer_to_notes(e):
-        answer = latest_answer["text"]
-
-        if not answer:
-            return
-
+    def add_chair_answer_to_notes(answer):
         append_notes(project_id, answer)
         notes_input.value = get_notes(project_id)
-        notes_input.update()
 
-        chair_status.value = "Added to Notes."
-        chair_status.update()
+        if notes_input.page:
+            notes_input.update()
 
-    def use_answer_as_mission(e):
-        answer = latest_answer["text"]
-
-        if not answer:
-            return
-
-        mission = first_useful_line(answer)
-        set_mission(project_id, mission)
-
-        chair_status.value = f"Mission updated: {mission}"
-        chair_status.update()
-
-    def dismiss_memory_actions(e):
-        memory_actions.visible = False
-        memory_actions.update()
-
-        chair_status.value = "Nothing saved. That's okay."
-        chair_status.update()
-
-    def build_memory_actions():
-        return [
-            quiet_button(
-                "Nothing",
-                icon=ft.Icons.CLOSE,
-                on_click=dismiss_memory_actions,
-            ),
-            quiet_button(
-                "Save discovery",
-                icon=ft.Icons.LIGHTBULB,
-                on_click=save_answer_as_discovery,
-            ),
-            quiet_button(
-                "Add to notes",
-                icon=ft.Icons.NOTE_ADD,
-                on_click=add_answer_to_notes,
-            ),
-            quiet_button(
-                "Update mission",
-                icon=ft.Icons.FLAG,
-                on_click=use_answer_as_mission,
-            ),
-        ]
-
-    chair_panel.content = ft.Column(
-        [
-            ft.Row(
-                [
-                    ft.Column(
-                        [
-                            ft.Text(
-                                "The Chair",
-                                size=22,
-                                weight=ft.FontWeight.BOLD,
-                            ),
-                            ft.Text(
-                                "Future Yuri already has the context.",
-                                size=12,
-                                color=colors.MUTED,
-                            ),
-                        ],
-                        spacing=2,
-                        expand=True,
-                    ),
-                    ft.IconButton(
-                        icon=ft.Icons.CLOSE,
-                        tooltip="Leave the chair",
-                        on_click=toggle_chair,
-                    ),
-                ]
-            ),
-            ft.Divider(color=colors.BORDER),
-            ft.Container(
-                content=chair_messages,
-                height=500,
-            ),
-            ft.Divider(color=colors.BORDER),
-            ft.Row(
-                [
-                    chair_input,
-                    ft.IconButton(
-                        icon=ft.Icons.SEND,
-                        tooltip="Send",
-                        on_click=send_to_future_yuri,
-                    ),
-                ],
-                vertical_alignment=ft.CrossAxisAlignment.END,
-            ),
-            chair_status,
-            memory_actions,
-        ],
-        spacing=12,
+    chair = ChatPanel(
+        page=page,
+        worker_name="Future Yuri",
+        panel_title="The Chair",
+        panel_subtitle="Future Yuri already has the context.",
+        intro_message=future_yuri_message(project_id),
+        input_hint="What's blocking us?",
+        ask_callback=ask_from_chair,
+        save_discovery_callback=lambda answer: add_discovery(
+            project_id,
+            answer,
+        ),
+        add_notes_callback=add_chair_answer_to_notes,
+        update_mission_callback=lambda mission: set_mission(
+            project_id,
+            mission,
+        ),
+        show_memory_actions=True,
     )
+
+    builder = ChatPanel(
+        page=page,
+        worker_name="Builder",
+        panel_title="Builder Preview",
+        panel_subtitle="Read-only access to this Place's source files.",
+        intro_message=(
+            "I can inspect this Place's real files and draft an "
+            "implementation plan. I cannot edit anything yet."
+        ),
+        input_hint="What should Builder inspect or plan?",
+        ask_callback=ask_builder,
+        show_memory_actions=False,
+    )
+
+    def open_chair(e):
+        builder.hide()
+        chair.toggle()
+
+    def open_builder(e):
+        chair.hide()
+        builder.toggle()
 
     workbench_content = ft.Column(
         [
@@ -375,27 +234,32 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                 icon=ft.Icons.ARROW_BACK,
                 on_click=lambda e: on_back(),
             ),
+
             ft.Text(
                 f"{project['icon']}  "
                 f"{project.get('nickname', project['name'])}",
                 size=38,
                 weight=ft.FontWeight.BOLD,
             ),
+
             ft.Text(
                 project["status"],
                 size=14,
                 color=colors.MUTED,
             ),
+
             ft.Text(
                 "Let's pick it back up.",
                 size=17,
                 color=colors.TEXT,
             ),
+
             ft.Text(
                 future_yuri_message(project_id),
                 size=14,
                 color=colors.MAJIN_PURPLE,
             ),
+
             ft.Row(
                 [
                     primary_button(
@@ -403,11 +267,16 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                         icon=ft.Icons.PLAY_ARROW,
                         on_click=continue_place,
                     ),
+
                     quiet_button(
                         "Folder",
                         icon=ft.Icons.FOLDER_OPEN,
-                        on_click=lambda e: open_folder(project, feedback),
+                        on_click=lambda e: open_folder(
+                            project,
+                            feedback,
+                        ),
                     ),
+
                     quiet_button(
                         "Website",
                         icon=ft.Icons.LANGUAGE,
@@ -417,6 +286,7 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                             feedback,
                         ),
                     ),
+
                     quiet_button(
                         "GitHub",
                         icon=ft.Icons.CODE,
@@ -426,21 +296,37 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                             feedback,
                         ),
                     ),
+
                     quiet_button(
                         "VS Code",
                         icon=ft.Icons.TERMINAL,
-                        on_click=lambda e: open_vscode(project, feedback),
+                        on_click=lambda e: open_vscode(
+                            project,
+                            feedback,
+                        ),
                     ),
+
                     ft.TextButton(
-                        content=chair_toggle_text,
-                        on_click=toggle_chair,
+                        "🪑 Take a seat",
+                        on_click=open_chair,
+                    ),
+
+                    ft.TextButton(
+                        "🛠 Builder Preview",
+                        on_click=open_builder,
                     ),
                 ],
                 spacing=spacing.SMALL_GAP,
                 wrap=True,
             ),
+
             feedback,
-            ft.Divider(height=30, color=colors.BORDER),
+
+            ft.Divider(
+                height=30,
+                color=colors.BORDER,
+            ),
+
             ft.Row(
                 [
                     ft.Container(
@@ -464,6 +350,7 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                         ),
                         expand=2,
                     ),
+
                     ft.Container(
                         ft.Column(
                             [
@@ -485,6 +372,7 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                                     ),
                                     accent="purple",
                                 ),
+
                                 section(
                                     "Discovery",
                                     ft.Column(
@@ -512,6 +400,7 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                 ],
                 spacing=spacing.GAP,
             ),
+
             ft.Row(
                 [
                     ft.Container(
@@ -522,6 +411,7 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                         ),
                         expand=1,
                     ),
+
                     ft.Container(
                         memory_section(
                             "Recent Dreams",
@@ -533,6 +423,7 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                 ],
                 spacing=spacing.GAP,
             ),
+
             memory_section(
                 "Recent History",
                 get_history(project_id),
@@ -550,47 +441,12 @@ def workbench_screen(project_id, on_back, on_message, on_open_session):
                 content=workbench_content,
                 expand=True,
             ),
-            chair_panel,
+            chair.control,
+            builder.control,
         ],
         spacing=spacing.GAP,
         vertical_alignment=ft.CrossAxisAlignment.START,
         expand=True,
-    )
-
-
-def message_bubble(
-    speaker: str,
-    text: str,
-    is_user: bool,
-    is_error: bool = False,
-):
-    if is_error:
-        speaker_color = colors.MUTED
-    elif is_user:
-        speaker_color = colors.EJ6_GREEN
-    else:
-        speaker_color = colors.MAJIN_PURPLE
-
-    return ft.Container(
-        padding=12,
-        border_radius=14,
-        bgcolor=colors.BG,
-        content=ft.Column(
-            [
-                ft.Text(
-                    speaker,
-                    size=11,
-                    color=speaker_color,
-                ),
-                ft.Text(
-                    text,
-                    size=14,
-                    color=colors.TEXT,
-                    selectable=True,
-                ),
-            ],
-            spacing=4,
-        ),
     )
 
 
@@ -633,16 +489,6 @@ def memory_section(title, items, accent):
     )
 
 
-def first_useful_line(text: str, maximum: int = 140) -> str:
-    for raw_line in text.splitlines():
-        line = raw_line.strip().lstrip("-*# ")
-
-        if line:
-            return line[:maximum]
-
-    return text.strip()[:maximum] or "Continue the current work."
-
-
 def open_folder(project, feedback):
     path = project["path"]
 
@@ -668,15 +514,19 @@ def open_url(url, label, feedback):
 
 
 def open_vscode(project, feedback):
-    path = project["path"]
+    project_path = project["path"]
 
-    if not os.path.exists(path):
-        feedback.value = f"Path not found: {path}"
+    if not os.path.exists(project_path):
+        feedback.value = f"Path not found: {project_path}"
         feedback.update()
         return
 
     executable = next(
-        (path for path in VS_CODE_PATHS if os.path.exists(path)),
+        (
+            candidate
+            for candidate in VS_CODE_PATHS
+            if os.path.exists(candidate)
+        ),
         None,
     )
 
@@ -685,6 +535,12 @@ def open_vscode(project, feedback):
         feedback.update()
         return
 
-    subprocess.Popen([executable, path])
+    subprocess.Popen(
+        [
+            executable,
+            project_path,
+        ]
+    )
+
     feedback.value = "VS Code opened."
     feedback.update()

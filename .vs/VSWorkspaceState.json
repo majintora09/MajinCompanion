@@ -2,8 +2,8 @@
   "ExpandedNodes": [
     "",
     "\\core",
-    "\\places\\data\\riftlab"
+    "\\screens"
   ],
-  "SelectedNode": "\\core\\version.py",
+  "SelectedNode": "\\screens\\workbench.py",
   "PreviewInSolutionExplorer": false
 }

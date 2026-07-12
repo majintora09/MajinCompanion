@@ -12,14 +12,24 @@ def future_yuri_message(place_id: str):
     score = calculate_momentum(place_id)
     label = momentum_label(score)
 
+    session = brain.get("session", {})
     discoveries = brain.get("discoveries", [])
+    dreams = brain.get("dreams", [])
+    notes = brain.get("notes", {})
 
-    if brain.get("session", {}).get("active"):
+    if session.get("active"):
         return f"{nickname} still has an active session. Let's pick it back up."
 
     if discoveries:
         latest = discoveries[-1]["text"]
         return f"Last useful discovery here: {latest}"
+
+    if dreams:
+        latest = dreams[-1]["text"]
+        return f"There's an idea waiting here: {latest}"
+
+    if isinstance(notes, dict) and notes.get("text"):
+        return f"{nickname} already has notes waiting. Good place to continue."
 
     if score >= 50:
         return f"{nickname} has {label.lower()}. Should be easy to continue."
